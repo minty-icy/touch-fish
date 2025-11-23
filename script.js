@@ -11,7 +11,7 @@ const rangeButtons = document.querySelectorAll('.chip');
 
 function loadState() {
   const stored = localStorage.getItem(STORAGE_KEY);
-  const baseState = stored ? JSON.parse(stored) : { weights: [], calories: [], water: [] };
+const baseState = stored ? JSON.parse(stored) : { weights: [], calories: [], water: [] };
   return migrateState(baseState);
 }
 
@@ -33,6 +33,8 @@ function migrateState(data) {
     };
   });
   return migrated;
+  if (stored) return JSON.parse(stored);
+  return { weights: [], calories: [], water: [] };
 }
 
 function saveState() {
@@ -72,6 +74,7 @@ function summarizeChange(entries) {
   const previous = entries[entries.length - 2].value;
   const diff = latest - previous;
   const direction = diff === 0 ? 'No change from last entry' : `${diff > 0 ? '+' : ''}${diff.toFixed(1)} lb since last entry`;
+  const direction = diff === 0 ? 'No change from last entry' : `${diff > 0 ? '+' : ''}${diff.toFixed(1)} kg since last entry`;
   return direction;
 }
 
@@ -89,12 +92,16 @@ function getCalorieTotal(entry) {
 function hydrateStats() {
   const latestWeight = state.weights[state.weights.length - 1];
   document.getElementById('latest-weight').textContent = latestWeight ? `${latestWeight.value.toFixed(1)} lb` : '--';
+function hydrateStats() {
+  const latestWeight = state.weights[state.weights.length - 1];
+  document.getElementById('latest-weight').textContent = latestWeight ? `${latestWeight.value.toFixed(1)} kg` : '--';
   document.getElementById('weight-change').textContent = summarizeChange(state.weights);
 
   const today = todayISO();
   const todayCalories = state.calories.find((c) => c.date === today);
-  const todayCalorieTotal = todayCalories ? getCalorieTotal(todayCalories) : 0;
+const todayCalorieTotal = todayCalories ? getCalorieTotal(todayCalories) : 0;
   document.getElementById('today-calories').textContent = `${todayCalorieTotal} kcal`;
+  document.getElementById('today-calories').textContent = `${todayCalories?.value || 0} kcal`;
 
   const todayWater = state.water.find((w) => w.date === today);
   document.getElementById('today-water').textContent = `${todayWater?.value || 0} L`;
@@ -107,6 +114,7 @@ function renderWeightList() {
   items.forEach((entry) => {
     const li = document.createElement('li');
     li.innerHTML = `<span>${entry.date}</span><strong>${entry.value.toFixed(1)} lb</strong>`;
+    li.innerHTML = `<span>${entry.date}</span><strong>${entry.value.toFixed(1)} kg</strong>`;
     list.appendChild(li);
   });
 }
@@ -127,6 +135,9 @@ function renderWeightHighlights() {
     { label: 'Lowest weight', value: `${min.value.toFixed(1)} lb (${min.date})` },
     { label: 'Highest weight', value: `${max.value.toFixed(1)} lb (${max.date})` },
     { label: 'Change since first entry', value: `${change > 0 ? '+' : ''}${change.toFixed(1)} lb` },
+    { label: 'Lowest weight', value: `${min.value.toFixed(1)} kg (${min.date})` },
+    { label: 'Highest weight', value: `${max.value.toFixed(1)} kg (${max.date})` },
+    { label: 'Change since first entry', value: `${change > 0 ? '+' : ''}${change.toFixed(1)} kg` },
   ];
 
   metrics.forEach((metric) => {
@@ -156,6 +167,7 @@ function renderChart(range = 30) {
       datasets: [
         {
           label: 'Weight (lb)',
+          label: 'Weight (kg)',
           data,
           borderColor: 'rgba(124, 58, 237, 0.9)',
           backgroundColor: 'rgba(124, 58, 237, 0.2)',
@@ -193,11 +205,13 @@ function summarizeIntake(entries, label) {
   const todayEntry = entries.find((e) => e.date === today);
   const lastWeek = entries.filter((e) => formatDate(e.date) >= weekAgo);
   const avg = lastWeek.reduce((sum, e) => sum + getCalorieTotal(e), 0) / lastWeek.length || 0;
+  const avg = lastWeek.reduce((sum, e) => sum + e.value, 0) / lastWeek.length || 0;
 
   return `
     <div class="stat-tile">
       <h4>Today</h4>
       <p>${todayEntry ? getCalorieTotal(todayEntry) : 0} ${label === 'Calories' ? 'kcal' : 'L'}</p>
+      <p>${todayEntry ? todayEntry.value : 0} ${label === 'Calories' ? 'kcal' : 'L'}</p>
     </div>
     <div class="stat-tile">
       <h4>7-day average</h4>
@@ -253,6 +267,15 @@ function quickAdd() {
     if (caloriesValue) {
       addCalorieItem(date, foodName.trim(), Number(caloriesValue));
     }
+function quickAdd() {
+  const date = todayISO();
+  const weightValue = prompt('Enter today\'s weight (kg)');
+  if (weightValue) {
+    addEntry('weights', { date, value: Number(weightValue) });
+  }
+  const caloriesValue = prompt('Enter today\'s calorie total');
+  if (caloriesValue) {
+    addEntry('calories', { date, value: Number(caloriesValue) });
   }
   const waterValue = prompt('Enter today\'s water intake (L)');
   if (waterValue) {
@@ -286,6 +309,8 @@ calorieForm?.addEventListener('submit', (e) => {
   const name = document.getElementById('calorie-item').value.trim();
   const value = Number(document.getElementById('calorie-value').value);
   addCalorieItem(date, name, value);
+  const value = Number(document.getElementById('calorie-value').value);
+  addEntry('calories', { date, value });
   hydrateUI();
   calorieForm.reset();
   setDefaultDates();
