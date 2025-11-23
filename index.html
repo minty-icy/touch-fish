@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diet Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Personal wellness dashboard</p>
+        <h1>Track your meals, macros, and hydration every day.</h1>
+        <p class="lede">
+          Stay consistent with your goals using quick daily logging, clear nutrient summaries, and a visual snapshot of your progress.
+        </p>
+        <div class="hero-actions">
+          <button class="primary" id="focusLog">Log today's meals</button>
+          <button class="ghost" id="focusGoals">Adjust goals</button>
+        </div>
+      </div>
+      <div class="hero-card card">
+        <h2>Today's targets</h2>
+        <div class="hero-summary" id="heroSummary"></div>
+        <p class="tiny">You can tweak these at any time in the goals panel.</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" id="goalsSection">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Targets</p>
+            <h2>Daily goals</h2>
+            <p class="muted">Calories and macros you want to hit each day.</p>
+          </div>
+        </div>
+        <form id="goalsForm" class="grid goals-grid">
+          <label>Calories (kcal)<input type="number" name="calories" min="0" required></label>
+          <label>Protein (g)<input type="number" name="protein" min="0" step="1" required></label>
+          <label>Carbs (g)<input type="number" name="carbs" min="0" step="1" required></label>
+          <label>Fats (g)<input type="number" name="fats" min="0" step="1" required></label>
+          <label>Water (ml)<input type="number" name="water" min="0" step="50" required></label>
+          <div class="goal-actions">
+            <button type="submit" class="primary">Save goals</button>
+            <span class="tiny muted">Your targets are stored on this device.</span>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Daily log</p>
+            <h2>Meal tracker</h2>
+            <p class="muted">Choose a date, add meals, and keep notes.</p>
+          </div>
+          <label class="date-filter">Date
+            <input type="date" id="filterDate" required />
+          </label>
+        </div>
+
+        <form id="entryForm" class="grid entry-grid">
+          <label>Meal name<input type="text" name="name" placeholder="Lunch, snack, shake" required></label>
+          <label>Calories (kcal)<input type="number" name="calories" min="0" required></label>
+          <label>Protein (g)<input type="number" name="protein" min="0" step="0.1"></label>
+          <label>Carbs (g)<input type="number" name="carbs" min="0" step="0.1"></label>
+          <label>Fats (g)<input type="number" name="fats" min="0" step="0.1"></label>
+          <label>Water (ml)<input type="number" name="water" min="0" step="50" placeholder="Optional"></label>
+          <label class="span-2">Notes<textarea name="notes" rows="2" placeholder="What made this meal great?"></textarea></label>
+          <div class="goal-actions span-2">
+            <button type="submit" class="primary">Add entry</button>
+            <button type="button" class="ghost" id="clearDay">Clear this day</button>
+          </div>
+        </form>
+
+        <div class="summary-grid" id="summary"></div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Meal</th>
+                <th>Calories</th>
+                <th>Protein</th>
+                <th>Carbs</th>
+                <th>Fats</th>
+                <th>Water</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="entryTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Trends</p>
+            <h2>Recent history</h2>
+            <p class="muted">A glance at how the last week compares to your goals.</p>
+          </div>
+        </div>
+        <div class="history-grid" id="history"></div>
+      </section>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
