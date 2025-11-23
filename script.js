@@ -11,6 +11,28 @@ const rangeButtons = document.querySelectorAll('.chip');
 
 function loadState() {
   const stored = localStorage.getItem(STORAGE_KEY);
+const baseState = stored ? JSON.parse(stored) : { weights: [], calories: [], water: [] };
+  return migrateState(baseState);
+}
+
+function migrateState(data) {
+  const migrated = { weights: data.weights || [], water: data.water || [] };
+  migrated.calories = (data.calories || []).map((entry) => {
+    if (entry.items) {
+      const items = entry.items.map((item) => ({
+        name: item.name || item.label || 'Entry',
+        calories: Number(item.calories ?? item.value ?? 0),
+      }));
+      const total = entry.total ?? items.reduce((sum, item) => sum + item.calories, 0);
+      return { date: entry.date, items, total };
+    }
+    return {
+      date: entry.date,
+      items: [{ name: entry.label || 'Entry', calories: Number(entry.value || 0) }],
+      total: Number(entry.value || 0),
+    };
+  });
+  return migrated;
   if (stored) return JSON.parse(stored);
   return { weights: [], calories: [], water: [] };
 }
@@ -33,11 +55,25 @@ function addEntry(type, entry) {
   saveState();
 }
 
+function addCalorieItem(date, name, calories) {
+  const existing = state.calories.find((entry) => entry.date === date);
+  const item = { name: name || 'Entry', calories: Number(calories) };
+  if (existing) {
+    existing.items.push(item);
+    existing.total = existing.items.reduce((sum, food) => sum + food.calories, 0);
+  } else {
+    state.calories.push({ date, items: [item], total: item.calories });
+  }
+  state.calories.sort((a, b) => formatDate(a.date) - formatDate(b.date));
+  saveState();
+}
+
 function summarizeChange(entries) {
   if (entries.length < 2) return 'Add more data to see change';
   const latest = entries[entries.length - 1].value;
   const previous = entries[entries.length - 2].value;
   const diff = latest - previous;
+  const direction = diff === 0 ? 'No change from last entry' : `${diff > 0 ? '+' : ''}${diff.toFixed(1)} lb since last entry`;
   const direction = diff === 0 ? 'No change from last entry' : `${diff > 0 ? '+' : ''}${diff.toFixed(1)} kg since last entry`;
   return direction;
 }
@@ -49,6 +85,13 @@ function setDefaultDates() {
   });
 }
 
+function getCalorieTotal(entry) {
+  return entry.total ?? entry.value ?? 0;
+}
+
+function hydrateStats() {
+  const latestWeight = state.weights[state.weights.length - 1];
+  document.getElementById('latest-weight').textContent = latestWeight ? `${latestWeight.value.toFixed(1)} lb` : '--';
 function hydrateStats() {
   const latestWeight = state.weights[state.weights.length - 1];
   document.getElementById('latest-weight').textContent = latestWeight ? `${latestWeight.value.toFixed(1)} kg` : '--';
@@ -56,6 +99,8 @@ function hydrateStats() {
 
   const today = todayISO();
   const todayCalories = state.calories.find((c) => c.date === today);
+const todayCalorieTotal = todayCalories ? getCalorieTotal(todayCalories) : 0;
+  document.getElementById('today-calories').textContent = `${todayCalorieTotal} kcal`;
   document.getElementById('today-calories').textContent = `${todayCalories?.value || 0} kcal`;
 
   const todayWater = state.water.find((w) => w.date === today);
@@ -68,6 +113,7 @@ function renderWeightList() {
   const items = [...state.weights].slice(-8).reverse();
   items.forEach((entry) => {
     const li = document.createElement('li');
+    li.innerHTML = `<span>${entry.date}</span><strong>${entry.value.toFixed(1)} lb</strong>`;
     li.innerHTML = `<span>${entry.date}</span><strong>${entry.value.toFixed(1)} kg</strong>`;
     list.appendChild(li);
   });
@@ -86,6 +132,9 @@ function renderWeightHighlights() {
   const change = latest.value - first.value;
 
   const metrics = [
+    { label: 'Lowest weight', value: `${min.value.toFixed(1)} lb (${min.date})` },
+    { label: 'Highest weight', value: `${max.value.toFixed(1)} lb (${max.date})` },
+    { label: 'Change since first entry', value: `${change > 0 ? '+' : ''}${change.toFixed(1)} lb` },
     { label: 'Lowest weight', value: `${min.value.toFixed(1)} kg (${min.date})` },
     { label: 'Highest weight', value: `${max.value.toFixed(1)} kg (${max.date})` },
     { label: 'Change since first entry', value: `${change > 0 ? '+' : ''}${change.toFixed(1)} kg` },
@@ -117,6 +166,7 @@ function renderChart(range = 30) {
       labels,
       datasets: [
         {
+          label: 'Weight (lb)',
           label: 'Weight (kg)',
           data,
           borderColor: 'rgba(124, 58, 237, 0.9)',
@@ -154,11 +204,13 @@ function summarizeIntake(entries, label) {
 
   const todayEntry = entries.find((e) => e.date === today);
   const lastWeek = entries.filter((e) => formatDate(e.date) >= weekAgo);
+  const avg = lastWeek.reduce((sum, e) => sum + getCalorieTotal(e), 0) / lastWeek.length || 0;
   const avg = lastWeek.reduce((sum, e) => sum + e.value, 0) / lastWeek.length || 0;
 
   return `
     <div class="stat-tile">
       <h4>Today</h4>
+      <p>${todayEntry ? getCalorieTotal(todayEntry) : 0} ${label === 'Calories' ? 'kcal' : 'L'}</p>
       <p>${todayEntry ? todayEntry.value : 0} ${label === 'Calories' ? 'kcal' : 'L'}</p>
     </div>
     <div class="stat-tile">
@@ -177,6 +229,44 @@ function renderIntake() {
   document.getElementById('water-stats').innerHTML = summarizeIntake(state.water, 'Water');
 }
 
+function renderFoodList() {
+  const list = document.getElementById('food-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const flattened = [];
+  state.calories.forEach((entry) => {
+    entry.items?.forEach((item) => {
+      flattened.push({ date: entry.date, name: item.name, calories: item.calories });
+    });
+  });
+  const recent = flattened.slice(-10).reverse();
+  if (!recent.length) {
+    const li = document.createElement('li');
+    li.classList.add('muted');
+    li.textContent = 'No foods logged yet';
+    list.appendChild(li);
+    return;
+  }
+
+  recent.forEach((item) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${item.date}</span><strong>${item.name} — ${item.calories} kcal</strong>`;
+    list.appendChild(li);
+  });
+}
+
+function quickAdd() {
+  const date = todayISO();
+  const weightValue = prompt('Enter today\'s weight (lb)');
+  if (weightValue) {
+    addEntry('weights', { date, value: Number(weightValue) });
+  }
+  const foodName = prompt('Enter a food item to log (cancel to skip)');
+  if (foodName !== null && foodName.trim() !== '') {
+    const caloriesValue = prompt('Calories for that item');
+    if (caloriesValue) {
+      addCalorieItem(date, foodName.trim(), Number(caloriesValue));
+    }
 function quickAdd() {
   const date = todayISO();
   const weightValue = prompt('Enter today\'s weight (kg)');
@@ -200,6 +290,7 @@ function hydrateUI(range = 30) {
   renderWeightHighlights();
   renderChart(range);
   renderIntake();
+  renderFoodList();
 }
 
 weightForm?.addEventListener('submit', (e) => {
@@ -215,6 +306,9 @@ weightForm?.addEventListener('submit', (e) => {
 calorieForm?.addEventListener('submit', (e) => {
   e.preventDefault();
   const date = document.getElementById('calorie-date').value;
+  const name = document.getElementById('calorie-item').value.trim();
+  const value = Number(document.getElementById('calorie-value').value);
+  addCalorieItem(date, name, value);
   const value = Number(document.getElementById('calorie-value').value);
   addEntry('calories', { date, value });
   hydrateUI();

@@ -83,6 +83,8 @@
             <input type="date" id="weight-date" required />
           </div>
           <div class="form-row">
+            <label for="weight-value">Weight (lb)</label>
+            <input type="number" id="weight-value" step="0.1" min="0" placeholder="150.0" required />
             <label for="weight-value">Weight (kg)</label>
             <input type="number" id="weight-value" step="0.1" min="0" placeholder="68.4" required />
           </div>
@@ -96,6 +98,12 @@
             <input type="date" id="calorie-date" required />
           </div>
           <div class="form-row">
+            <label for="calorie-item">Food item</label>
+            <input type="text" id="calorie-item" placeholder="Grilled chicken" required />
+          </div>
+          <div class="form-row">
+            <label for="calorie-value">Calories</label>
+            <input type="number" id="calorie-value" min="0" placeholder="320" required />
             <label for="calorie-value">Calories</label>
             <input type="number" id="calorie-value" min="0" placeholder="2100" required />
           </div>
@@ -125,6 +133,10 @@
           <p class="muted">Focus only on calorie totals — no macro setup needed.</p>
         </div>
         <div class="stats-grid" id="calorie-stats"></div>
+        <div class="panel subtle">
+          <h3>Food log</h3>
+          <ul class="list" id="food-list"></ul>
+        </div>
       </div>
       <div>
         <div class="section-header">
