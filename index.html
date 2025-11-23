@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TouchFish Wellness Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__content">
+      <p class="eyebrow">TouchFish</p>
+      <h1>Wellness made simple</h1>
+      <p class="lede">Track your weight, calories, and hydration in one streamlined dashboard — no macro counting required.</p>
+      <div class="hero__actions">
+        <button class="btn btn--primary" id="quick-add">Quick add today</button>
+        <button class="btn btn--ghost" id="scroll-to-forms">Add detailed entry</button>
+      </div>
+    </div>
+    <div class="hero__stats">
+      <div class="stat-card">
+        <p class="stat-label">Latest weight</p>
+        <p class="stat-value" id="latest-weight">--</p>
+        <p class="stat-sub" id="weight-change">Waiting for data</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Today's calories</p>
+        <p class="stat-value" id="today-calories">0 kcal</p>
+        <p class="stat-sub">No macros needed</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Water intake</p>
+        <p class="stat-value" id="today-water">0 L</p>
+        <p class="stat-sub">Keep the hydration going</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel grid two-column">
+      <div>
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Weight</p>
+            <h2>Trend over time</h2>
+          </div>
+          <div class="chip-group">
+            <button class="chip active" data-range="30">30d</button>
+            <button class="chip" data-range="90">90d</button>
+            <button class="chip" data-range="365">1y</button>
+          </div>
+        </div>
+        <canvas id="weightChart" height="240"></canvas>
+      </div>
+      <div class="card-stack">
+        <div class="panel subtle">
+          <h3>Recent weights</h3>
+          <ul class="list" id="weight-list"></ul>
+        </div>
+        <div class="panel subtle">
+          <h3>Highlights</h3>
+          <ul class="metrics" id="weight-highlights"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel grid two-column" id="forms">
+      <div>
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Log</p>
+            <h2>Add entries</h2>
+          </div>
+          <p class="muted">Store weight, calories, and water with clean forms.</p>
+        </div>
+        <form id="weight-form" class="form">
+          <div class="form-row">
+            <label for="weight-date">Date</label>
+            <input type="date" id="weight-date" required />
+          </div>
+          <div class="form-row">
+            <label for="weight-value">Weight (lb)</label>
+            <input type="number" id="weight-value" step="0.1" min="0" placeholder="150.0" required />
+          </div>
+          <button type="submit" class="btn btn--primary">Add weight</button>
+        </form>
+      </div>
+      <div class="card-stack">
+        <form id="calorie-form" class="form panel subtle">
+          <div class="form-row">
+            <label for="calorie-date">Date</label>
+            <input type="date" id="calorie-date" required />
+          </div>
+          <div class="form-row">
+            <label for="calorie-item">Food item</label>
+            <input type="text" id="calorie-item" placeholder="Grilled chicken" required />
+          </div>
+          <div class="form-row">
+            <label for="calorie-value">Calories</label>
+            <input type="number" id="calorie-value" min="0" placeholder="320" required />
+          </div>
+          <button type="submit" class="btn btn--primary">Log calories</button>
+        </form>
+        <form id="water-form" class="form panel subtle">
+          <div class="form-row">
+            <label for="water-date">Date</label>
+            <input type="date" id="water-date" required />
+          </div>
+          <div class="form-row">
+            <label for="water-value">Water (L)</label>
+            <input type="number" id="water-value" min="0" step="0.1" placeholder="2.5" required />
+          </div>
+          <button type="submit" class="btn btn--primary">Log water</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel grid two-column">
+      <div>
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Calories</p>
+            <h2>Simplified intake</h2>
+          </div>
+          <p class="muted">Focus only on calorie totals — no macro setup needed.</p>
+        </div>
+        <div class="stats-grid" id="calorie-stats"></div>
+        <div class="panel subtle">
+          <h3>Food log</h3>
+          <ul class="list" id="food-list"></ul>
+        </div>
+      </div>
+      <div>
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Water</p>
+            <h2>Hydration rhythm</h2>
+          </div>
+          <p class="muted">Stay consistent with clear daily targets.</p>
+        </div>
+        <div class="stats-grid" id="water-stats"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Designed for balance — quick logging, clean visuals, and zero fuss.</p>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
